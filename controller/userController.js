@@ -1,8 +1,56 @@
 import jwt from 'jsonwebtoken';
 import userModel from '../model/userModel.js';
 import bcrypt from 'bcrypt'
+import expenseModel from '../model/expenseModel.js';
 import productModel from '../model/productModel.js';
 import billModel from '../model/billModel.js';
+
+export const saveBill = async (req, res) => {
+  try {
+    const { value } = req.body;
+    const invoiceNum = await billModel.countDocuments() + 1000;
+
+    if (!value || !value.products || value.products.length === 0) {
+      return res.status(400).json({ message: 'All value and products are required' });
+    }
+
+    // Update stock for each product
+    for (const product of value.products) {
+      const { productId, quantity } = product;
+
+      if (!productId || !quantity) {
+        return res.status(400).json({ message: 'Product ID and quantity are required for all products' });
+      }
+
+      const existingProduct = await productModel.findById(productId);
+      if (!existingProduct) {
+        return res.status(404).json({ message: `Product with ID ${productId} not found` });
+      }
+
+      // Deduct the stock
+      existingProduct.stock -= quantity;
+      await existingProduct.save();
+    }
+
+    // Create a new bill
+    const newBill = await billModel.create({
+      billNumber: invoiceNum,
+      ...value,
+    });
+
+    await newBill.save();
+
+    // Return the created bill
+    return res.status(200).json({
+      message: "Bill Saved",
+      bill: newBill,
+    });
+  } catch (error) {
+    console.log(error.message);
+    return res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
 
 export const userHome = async(req,res)=>{
     try {
@@ -68,26 +116,67 @@ export const getProducts = async (req, res) => {
   }
 };
 
-export const saveBill = async(req,res)=>{
+
+
+export const fetchUserBills = async (req, res) => {
   try {
-    const {value} = req.body;
-    const invoiceNum = await billModel.countDocuments()+1000;
-    if(!value){
-      return res.status(400).json({message:'All value required'})
+      const { userId } = req.params;
+      const { page = 1, search = "" } = req.query;
+      const limit = 10;
+      const skip = (page - 1) * limit;
+
+      if (!userId) {
+          return res.status(400).json({ message: "userId required" });
+      }
+
+      const query = {
+          'createdBy.id': userId
+      };
+
+      // Add search conditions if search query exists
+      if (search) {
+        query.billNumber = { $regex: search, $options: 'i' };
     }
-    const newBill = await billModel.create({
-      billNumber:invoiceNum,
-      ...value
-    })
-    await newBill.save();
-    // Return the created bill
-    return res.status(200).json({
-      message: "Bill Saved",
-      bill: newBill
+    
+
+      const [bills, total] = await Promise.all([
+          billModel
+              .find(query)
+              .sort({ createdAt: -1 })
+              .skip(skip)
+              .limit(limit),
+          billModel.countDocuments(query)
+      ]);
+
+      res.status(200).json({
+          bills,
+          total,
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(total / limit)
+      });
+  } catch (error) {
+      console.log(error.message);
+      res.status(500).json({ status: "Internal Server Error" });
+  }
+};
+
+export const addExpense = async(req,res)=>{
+  try {
+    const{name,amount} = req.body;
+    if(!name || !amount){
+      return res.status(400).json({message:"Please fill all fields"})
+    }
+
+    const newExpense = await expenseModel.create({
+      name,
+      amount
     });
+    await newExpense.save();
+    res.status(200).json({message:"Expense Added"})
+    
   } catch (error) {
     console.log(error.message);
-    return res.status(500).json({ error: "Internal Server Error" });
+      res.status(500).json({ status: "Internal Server Error" });
   }
 }
 
