@@ -215,7 +215,6 @@ export const fetchAllInvoices = async (req, res) => {
   }
 };
 
-// controllers/reportController.js
 
 
 export const getSalesReport = async (req, res) => {
