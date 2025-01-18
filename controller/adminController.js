@@ -186,13 +186,17 @@ export const fetchAllUsers = async (req, res) => {
 export const fetchAllInvoices = async (req, res) => {
   try {
       const { page = 1, search = "" } = req.query;
-      const limit = 10;
+      const limit = 50;
       const skip = (page - 1) * limit;
+
+
+      const query = {};
+
       // Add search conditions if search query exists
-      const query = {}
       if (search) {
         query.billNumber = { $regex: search, $options: 'i' };
     }
+    
 
       const [bills, total] = await Promise.all([
           billModel
@@ -572,3 +576,88 @@ export const downloadSalesReport = async (req, res) => {
     });
   }
 };
+
+export const updateUserPass = async(req,res)=>{
+  try {
+   const {userId,newPass} = req.body;
+   if(!userId||!newPass){
+    return res.status(400).json({message:"userId or password missing"})
+   }
+   const user = await userModel.findById(userId);
+   if(!user){
+    return res.status(404).json({message:"User not Found"});
+   }
+   const encryptedPassword = await securePassword(newPass);
+   user.password = encryptedPassword;
+   await user.save();
+   res.status(200).json({message:`${user.name} Password Updated`})
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ status: "Internal Server Error" });
+  }
+}
+
+export const updateUser = async(req,res)=>{
+  try {
+    const {userId, values} = req.body;
+    if(!userId || !values){
+      return res.status(400).json({message:"User ID or update values missing"})
+    }
+    
+    const user = await userModel.findById(userId);
+    if(!user){
+      return res.status(404).json({message:"User not Found"});
+    }
+
+    // Update user with provided values
+    const updatedUser = await userModel.findByIdAndUpdate(
+      userId,
+      {
+        $set: {
+          name: values.name,
+          phone: values.phone,
+          loginId: values.loginId,
+          is_blocked: values.is_blocked
+        }
+      },
+      { new: true }
+    );
+
+    res.status(200).json({
+      message: "User updated successfully",
+      user: updatedUser
+    });
+
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}
+
+export const fetchAllExpenses = async(req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Get total count for pagination
+    const totalExpenses = await expenseModel.countDocuments({});
+    
+    // Fetch paginated expenses
+    const expenses = await expenseModel.find({})
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    res.status(200).json({
+      expenses,
+      currentPage: page,
+      totalPages: Math.ceil(totalExpenses / limit),
+      totalExpenses
+    });
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+}

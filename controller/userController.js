@@ -122,7 +122,7 @@ export const fetchUserBills = async (req, res) => {
   try {
       const { userId } = req.params;
       const { page = 1, search = "" } = req.query;
-      const limit = 10;
+      const limit = 50;
       const skip = (page - 1) * limit;
 
       if (!userId) {
