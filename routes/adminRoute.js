@@ -9,7 +9,8 @@ import {
   downloadSalesReport,
   updateUserPass,
   updateUser,
-  fetchAllExpenses
+  fetchAllExpenses,
+  addExpense
 } from "../controller/adminController.js";
 import {
   addProduct,
@@ -33,6 +34,7 @@ adminRoute.get("/fetchAllInvoices", fetchAllInvoices);
 adminRoute.get("/fetchDashboard", fetchDashData);
 
 adminRoute.get("/fetchExpenses", fetchAllExpenses);
+adminRoute.post('/addExpense',addExpense)
 
 adminRoute.get("/reports/sales", getSalesReport);
 adminRoute.get("/reports/download", downloadSalesReport);

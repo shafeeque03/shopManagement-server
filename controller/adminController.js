@@ -661,3 +661,23 @@ export const fetchAllExpenses = async(req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 }
+
+export const addExpense = async(req,res)=>{
+  try {
+    const{name,amount} = req.body;
+    if(!name || !amount){
+      return res.status(400).json({message:"Please fill all fields"})
+    }
+
+    const newExpense = await expenseModel.create({
+      name,
+      amount:parseInt(amount)
+    });
+    await newExpense.save();
+    res.status(200).json({message:"Expense Added"})
+    
+  } catch (error) {
+    console.log(error.message);
+      res.status(500).json({ status: "Internal Server Error" });
+  }
+}
