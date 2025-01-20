@@ -52,16 +52,6 @@ export const saveBill = async (req, res) => {
 };
 
 
-export const userHome = async(req,res)=>{
-    try {
-        const msg = 'Welcome to home';
-        res.status(200).json({msg})
-    } catch (error) {
-        console.error(error.message);
-    res.status(500).json({ message: "Server error" });
-    }
-}
-
 export const userLogin = async (req, res) => {
   try {
     const{loginId,password} = req.body
