@@ -7,7 +7,6 @@ import rateLimit from 'express-rate-limit'; // For rate limiting
 import mongoSanitize from 'express-mongo-sanitize'; // For preventing NoSQL injections
 import xssClean from 'xss-clean'; // For preventing cross-site scripting
 import hpp from 'hpp'; // For preventing HTTP parameter pollution
-import csrf from 'csurf'; // For CSRF protection
 import dbconnect from './config/Database.js';
 import userRoute from './routes/userRoute.js';
 import adminRoute from './routes/adminRoute.js';
@@ -39,11 +38,7 @@ app.use(xssClean());
 // 5. Prevent HTTP Parameter Pollution
 app.use(hpp());
 
-// 6. CSRF Protection
-const csrfProtection = csrf({ cookie: true });
-app.use(csrfProtection);
-
-// 7. Enable CORS
+// 6. Enable CORS
 app.use(cors({
     origin: "http://localhost:5173",
     methods: ['GET', 'POST', 'PUT', 'PATCH'],
@@ -57,12 +52,6 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Routes
 app.use('/', userRoute);
 app.use('/admin', adminRoute);
-
-// CSRF Token Middleware - Add CSRF Token to Response
-app.use((req, res, next) => {
-    res.locals.csrfToken = req.csrfToken(); // Attach CSRF token to every response
-    next();
-});
 
 // Server Creation
 const server = http.createServer(app);

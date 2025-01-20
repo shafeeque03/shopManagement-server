@@ -242,7 +242,7 @@ export const getSalesReport = async (req, res) => {
         $sort: { createdAt: -1 }
       },
       {
-        $limit: 20
+        $limit: 10
       }
     ]);
 
@@ -500,10 +500,10 @@ export const downloadSalesReport = async (req, res) => {
                 <tr>
                   <td>${bill.billNumber}</td>
                   <td>${bill.createdBy?.name || 'N/A'}</td>
-                  <td>$${bill.subTotal?.toFixed(2)}</td>
-                  <td>$${bill.taxAmount?.toFixed(2)}</td>
-                  <td>$${bill.discount?.toFixed(2)}</td>
-                  <td>$${bill.total?.toFixed(2)}</td>
+                  <td>${bill.subTotal?.toFixed(2)}</td>
+                  <td>${bill.taxAmount?.toFixed(2)}</td>
+                  <td>${bill.discount?.toFixed(2)}</td>
+                  <td>${bill.total?.toFixed(2)}</td>
                   <td>${bill.paymentMethod}</td>
                   <td>${bill.createdAt.toISOString().split('T')[0]}</td>
                 </tr>
@@ -521,11 +521,11 @@ export const downloadSalesReport = async (req, res) => {
             </div>
             <div class="summary-item">
               <div class="summary-label">Total Revenue</div>
-              <div class="summary-value">$${totalRevenue.toFixed(2)}</div>
+              <div class="summary-value">${totalRevenue.toFixed(2)}</div>
             </div>
             <div class="summary-item">
               <div class="summary-label">Average Bill Value</div>
-              <div class="summary-value">$${(totalRevenue / quotations.length).toFixed(2)}</div>
+              <div class="summary-value">${(totalRevenue / quotations.length).toFixed(2)}</div>
             </div>
           </div>
         </div>
@@ -638,7 +638,7 @@ export const updateUser = async(req,res)=>{
 export const fetchAllExpenses = async(req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
+    const limit = parseInt(req.query.limit) || 50;
     const skip = (page - 1) * limit;
 
     // Get total count for pagination
