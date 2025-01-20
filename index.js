@@ -5,7 +5,6 @@ import http from 'http';
 import helmet from 'helmet'; // For securing HTTP headers
 import rateLimit from 'express-rate-limit'; // For rate limiting
 import mongoSanitize from 'express-mongo-sanitize'; // For preventing NoSQL injections
-import xssClean from 'xss-clean'; // For preventing cross-site scripting
 import hpp from 'hpp'; // For preventing HTTP parameter pollution
 import dbconnect from './config/Database.js';
 import userRoute from './routes/userRoute.js';
@@ -32,8 +31,6 @@ app.use(apiLimiter);
 // 3. Prevent NoSQL Injection
 app.use(mongoSanitize());
 
-// 4. Prevent XSS Attacks
-app.use(xssClean());
 
 // 5. Prevent HTTP Parameter Pollution
 app.use(hpp());
