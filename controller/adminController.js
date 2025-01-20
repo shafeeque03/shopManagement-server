@@ -641,6 +641,51 @@ export const fetchAllExpenses = async(req, res) => {
     const limit = parseInt(req.query.limit) || 50;
     const skip = (page - 1) * limit;
 
+    // Get current date info for filtering
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
+    // Get total expenses amount
+    const totalAmount = await expenseModel.aggregate([
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    // Get this month's expenses
+    const monthlyAmount = await expenseModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfMonth }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" }
+        }
+      }
+    ]);
+
+    // Get this year's expenses
+    const yearlyAmount = await expenseModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfYear }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" }
+        }
+      }
+    ]);
+
     // Get total count for pagination
     const totalExpenses = await expenseModel.countDocuments({});
     
@@ -654,7 +699,12 @@ export const fetchAllExpenses = async(req, res) => {
       expenses,
       currentPage: page,
       totalPages: Math.ceil(totalExpenses / limit),
-      totalExpenses
+      totalExpenses,
+      summary: {
+        total: totalAmount[0]?.total || 0,
+        monthly: monthlyAmount[0]?.total || 0,
+        yearly: yearlyAmount[0]?.total || 0
+      }
     });
   } catch (error) {
     console.log(error.message);
