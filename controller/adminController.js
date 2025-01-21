@@ -635,7 +635,7 @@ export const updateUser = async(req,res)=>{
   }
 }
 
-export const fetchAllExpenses = async(req, res) => {
+export const fetchAllExpenses = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 50;
@@ -645,6 +645,7 @@ export const fetchAllExpenses = async(req, res) => {
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfYear = new Date(now.getFullYear(), 0, 1);
+    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     // Get total expenses amount
     const totalAmount = await expenseModel.aggregate([
@@ -686,6 +687,21 @@ export const fetchAllExpenses = async(req, res) => {
       }
     ]);
 
+    // Get today's expenses
+    const todaysAmount = await expenseModel.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: startOfDay }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: "$amount" }
+        }
+      }
+    ]);
+
     // Get total count for pagination
     const totalExpenses = await expenseModel.countDocuments({});
     
@@ -703,14 +719,16 @@ export const fetchAllExpenses = async(req, res) => {
       summary: {
         total: totalAmount[0]?.total || 0,
         monthly: monthlyAmount[0]?.total || 0,
-        yearly: yearlyAmount[0]?.total || 0
+        yearly: yearlyAmount[0]?.total || 0,
+        today: todaysAmount[0]?.total || 0
       }
     });
   } catch (error) {
     console.log(error.message);
     res.status(500).json({ message: "Internal Server Error" });
   }
-}
+};
+
 
 export const addExpense = async(req,res)=>{
   try {
